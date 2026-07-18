@@ -36,5 +36,4 @@ def minimize(board: chess.Board, depth: int):
             min_eval = score
             best_move = move
         board.pop()
-    print(min_eval, best_move)
     return min_eval, best_move
