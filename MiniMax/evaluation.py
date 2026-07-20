@@ -87,7 +87,9 @@ KING_PST_ENDGAME = [
 ]
 
 
-def evaluate_board(board: chess.Board) -> int:
+def evaluate_board(board: chess.Board, dict={}) -> int:
+    if board.fen() in dict:
+        return dict[board.fen()]
 
     if board.is_checkmate():
         return -99999 if board.turn == chess.WHITE else 99999
@@ -146,4 +148,5 @@ def evaluate_board(board: chess.Board) -> int:
                     if piece.color == chess.WHITE
                     else -KING_PST_MIDDLEGAME[chess.square_mirror(index)]
                 )
+    dict[board.fen()] = score
     return score
