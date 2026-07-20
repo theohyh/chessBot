@@ -17,6 +17,7 @@ def main():
         print(board)
         print("=" * 40)
         if board.turn == human:
+            """
             move_str = input("Votre Coup (ex: e2e4): ").strip()
             try:
                 move = chess.Move.from_uci(move_str)
@@ -26,11 +27,25 @@ def main():
                     print("Coup invalide.")
             except ValueError:
                 print("Format incorrecte.")
-        else:
-            print("Bot is playing ...")
+            """
+            print("Bot 1 is playing ...")
             is_max = board.turn == chess.WHITE
 
-            score, best_move = minimax(board, depth, is_max)
+            score, best_move = minimax(board, 4, is_max)
+
+            if best_move:
+                print(f"Le bot joue : {best_move}")
+                print(f"score : {score}")
+                board.push(best_move)
+
+            else:
+                print("Aucun coup")
+                break
+        else:
+            print("Bot 2 is playing ...")
+            is_max = board.turn == chess.WHITE
+
+            score, best_move = minimax(board, 3, is_max)
 
             if best_move:
                 print(f"Le bot joue : {best_move}")
