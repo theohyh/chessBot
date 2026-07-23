@@ -1,1 +1,5 @@
 python-chess
+mss
+numpy
+matplotlib
+opencv-python
