@@ -1,6 +1,5 @@
-from logging import critical
+from calendar import c
 import os
-from turtle import resetscreen
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
@@ -47,22 +46,21 @@ def main():
         cv2.waitKey(0) """
 
 
-    cv2.destroyAllWindows()
-
-    #detect_piece(np_image)
+        dict_squares, drawn_img = match_board(np_image)
+        detect_piece(drawn_img)
 
 def draw_matches(matches,img):
     draw_img = img.copy()
     for match in matches:
         x1,y1,x2,y2 = match["bbox"]
-        drawn_img = cv2.rectangle(draw_img, (x1,y1),(x2,y2),(0,0,0),3)
+        #drawn_img = cv2.rectangle(draw_img, (x1,y1),(x2,y2),(0,0,0),3)
         drawn_img = cv2.putText(
-            img=drawn_img,
-            text=f"{match['template']}: {match['score']:.2f}",
-            org=(x1 - 5, y1 -10),
+            img=draw_img,
+            text=f"{match['template']}",
+            org=(x1 + 10, y1 +50),
             fontFace=cv2.FONT_HERSHEY_COMPLEX,
-            fontScale=0.5,
-            color=(0,0,0),
+            fontScale=0.75,
+            color=(0,255,0),
             thickness=3
         )
     return drawn_img
@@ -131,8 +129,55 @@ def detect_piece(img):
     plt.title("Template Matching Result")
     plt.show()
 
+def draw_squares(all_squares, img, dw, dh,dict):
+    draw_img = img.copy()
+    for x, y in all_squares:
+        cv2.rectangle(draw_img, (x, y), (x+dw, y+dh), (0, 255, 0), 2)
+        cv2.putText(draw_img, dict[(x, y)], (x+5, y+20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 2)
+    return draw_img
 
 
+def match_board(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = np.float32(gray)
+    corners = cv2.cornerHarris(gray, blockSize=4, ksize=3, k=0.04)
+    y_arr, x_arr = np.where(corners > 0.001 * corners.max())
+    points_w = list(zip(x_arr[:10],y_arr[:10]))
+    points_w = post_process_locs(points_w)
+    points_w = sorted(points_w, key=lambda p: (p[0], p[1]))
+    points_h = [(x,y) for x,y in zip(x_arr,y_arr) if abs(x-points_w[0][0]) < 3]
+    points_h = post_process_locs(points_h)
+    points_h = sorted(points_h, key=lambda p: (p[0], p[1]))
+
+    points = points_w + points_h
+
+    first_point = points_w[0]
+
+    dw = abs(first_point[0] - points_w[1][0])+2
+    dh = abs(first_point[1] - points_h[0][1])+2
+
+    all_squares = [(x,y) for x in range(first_point[0], first_point[0]+(dw*8), dw) for y in range(first_point[1], first_point[1]+(dh*8), dh)]
+
+    labels = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+        "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+        "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+        "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+        "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+        "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+        "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+        "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+    ]
+
+    dict_squares = {p: label for p, label in zip(all_squares, labels)}
+
+    drawn_img = draw_squares(all_squares, img,dh,dw,dict_squares)
+    """ plt.figure(figsize=(10,8))
+    plt.subplot(121)
+    plt.imshow(cv2.cvtColor(drawn_img, cv2.COLOR_BGR2RGB))
+    plt.title("Template Matching Result")
+    plt.show() """
+
+    return dict_squares, drawn_img
 
 
 
