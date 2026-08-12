@@ -1,7 +1,6 @@
-
-
-from multiprocessing.reduction import duplicate
-
+from logging import critical
+import os
+from turtle import resetscreen
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
@@ -9,6 +8,7 @@ from mss import MSS as mss
 
 MONITOR_2 = 1920
 MONITOR_1 = 0
+
 
 METHODS = {
     "TM_SQDIFF",
@@ -19,25 +19,37 @@ METHODS = {
     "TM_CCOEFF_NORMED"
 }
 
+PIECES_NAMES = {
+    "pawn": "p",
+    "rook": "r",
+    "knight": "n",
+    "bishop": "b",
+    "queen": "q",
+    "king": "k"
+}
+
+folder = "InputBot/ressources/pieces"
+
+
 def main():
-    '''
     with mss() as sct:
         region = {
-            "top": 121,
-            "left": MONITOR_2 + 352,
-            "width": 813,
-            "height": 813,
+            "top": 221,
+            #"left": MONITOR_1 + 352,
+            "left": 280,
+            "width": 873,
+            "height": 873,
         }
 
         sct_image = sct.grab(region)
         np_image = np.array(sct_image)
-        np_image_rgb = np_image[:, :, :3][:, :, ::-1]
-        np_image_gray = np_image_rgb[:, :, 1]
-        cv2.imshow("Capture", np_image_gray)
-        cv2.waitKey(0)
+        """ cv2.imshow("Capture", np_image)
+        cv2.waitKey(0) """
+
+
     cv2.destroyAllWindows()
-    '''
-    detect_piece()
+
+    #detect_piece(np_image)
 
 def draw_matches(matches,img):
     draw_img = img.copy()
@@ -73,50 +85,53 @@ def post_process_locs(points):
     return kept_locs
 
 
-def detect_piece():
+def detect_piece(img):
+    if img is None:
+        board = cv2.imread("InputBot/ressources/board2.png")
+    else:
+        board = img
 
-    board = cv2.imread("InputBot/ressources/board.png")
     board_rgb = cv2.cvtColor(board,cv2.COLOR_BGR2RGB)
     board_gray = cv2.cvtColor(board,cv2.COLOR_BGR2GRAY)
 
-    piece = cv2.imread("InputBot/ressources/bb.png", cv2.IMREAD_GRAYSCALE)
-    piece = cv2.resize(piece,(100,100))
-    h,w = piece.shape
-
     matches = []
-    method = "TM_CCORR_NORMED"
-    cv2_method = getattr(cv2,method)
-    res = cv2.matchTemplate(board_gray,piece,cv2_method)
-    """ min_val, max_val, min_loc,max_loc = cv2.minMaxLoc(res)
-        if cv2_method in [cv2.TM_SQDIFF,cv2.TM_SQDIFF_NORMED]:
-            point = min_loc
-            score = min_val
-        else:
-            point = max_loc
-            score = max_val """
+    for filename in os.listdir(folder):
+        filepath = os.path.join(folder, filename)
+        piece = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+        piece = cv2.resize(piece,(100,100))
+        h,w = piece.shape
 
-    y_arr,x_arr = np.where(res >= 0.95)
-    points = list(zip(x_arr,y_arr))
-    points = post_process_locs(points)
+        method = "TM_CCORR_NORMED"
+        cv2_method = getattr(cv2,method)
+        res = cv2.matchTemplate(board_gray,piece,cv2_method)
+        """ min_val, max_val, min_loc,max_loc = cv2.minMaxLoc(res)
+            if cv2_method in [cv2.TM_SQDIFF,cv2.TM_SQDIFF_NORMED]:
+                point = min_loc
+                score = min_val
+            else:
+                point = max_loc
+                score = max_val """
 
-    for point in points:
-        matches.append({
-            "template": "black bishop",
-            "score": res[point[1],point[0]],
-            "bbox":(point[0],point[1],point[0]+w,point[1]+h)
-        })
+        y_arr,x_arr = np.where(res >= 0.90)
+        points = list(zip(x_arr,y_arr))
+        points = post_process_locs(points)
+
+        for point in points:
+            matches.append({
+                "template": filename,
+                "score": res[point[1],point[0]],
+                "bbox":(point[0],point[1],point[0]+w,point[1]+h)
+            })
 
     display = draw_matches(matches,board)
 
     plt.figure(figsize=(10,8))
     plt.subplot(121)
     plt.imshow(cv2.cvtColor(display,cv2.COLOR_BGR2RGB))
-    plt.title(f"Template Matching Result: {method}")
-
-    plt.subplot(122)
-    plt.imshow(res, cmap="gray")
-    plt.title(f"Match scores {method}")
+    plt.title("Template Matching Result")
     plt.show()
+
+
 
 
 
