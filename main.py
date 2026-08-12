@@ -31,7 +31,7 @@ def main():
             print("Bot 1 is playing ...")
             is_max = board.turn == chess.WHITE
 
-            score, best_move = minimax(board, 4, is_max)
+            score, best_move = minimax(board, 3, is_max)
 
             if best_move:
                 print(f"Le bot joue : {best_move}")
