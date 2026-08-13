@@ -9,7 +9,7 @@ def main():
     print("=" * 40)
 
     board = chess.Board()
-    human = chess.WHITE
+    human = chess.BLACK
     depth = 3
 
     while not board.is_game_over():

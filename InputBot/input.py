@@ -3,7 +3,8 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from mss import MSS as mss
-
+import chess
+from numpy.ma.core import sort
 
 
 MONITOR_2 = 1920
@@ -30,6 +31,21 @@ PIECES_NAMES = {
 
 folder = "InputBot/ressources/pieces"
 
+board = {
+  'wr': ['a1', 'h1'],
+  'wn': ['b1', 'g1'],
+  'wb': ['c1', 'f1'],
+  'wq': ['d1'],
+  'wk': ['e1'],
+  'wp': ['a2', 'b2', 'c2', 'd2', 'e2', 'f2', 'g2', 'h2'],
+  'bp': ['a7', 'b7', 'c7', 'd7', 'e7', 'f7', 'g7', 'h7'],
+  'br': ['a8', 'h8'],
+  'bn': ['b8', 'g8'],
+  'bb': ['c8', 'f8'],
+  'bq': ['d8'],
+  'bk': ['e8']
+}
+
 
 def main():
     with mss() as sct:
@@ -53,8 +69,7 @@ def main():
 
         nearest_squares = get_pieces_positions(matches, dict_squares)
 
-        print(nearest_squares)
-
+        print(get_move(nearest_squares, board))
 
         plt.figure(figsize=(10,8))
         plt.subplot(121)
@@ -74,9 +89,30 @@ def get_pieces_positions(matches, dict_squares):
             if d < min_dist:
                 min_dist = d
                 nearest_sqr = dict_squares[point]
-        nearest_squares[nearest_sqr] = match["template"]
+        template = match["template"].removesuffix(".png")
+        nearest_squares.setdefault(template, []).append(nearest_sqr)
     return nearest_squares
 
+def get_move(nearest_squares, board):
+    res = []
+    diff_vals = [(nearest_squares[k], board[k]) for k in nearest_squares.keys() & board.keys() if sorted(nearest_squares[k]) != sorted(board[k])]
+    if diff_vals:
+        for each_diff in diff_vals:
+            l1, l2 = each_diff
+
+            only_in_l2 = [x for x in l2 if x not in l1]
+            only_in_l1 = [x for x in l1 if x not in l2]
+
+            move = only_in_l2 + only_in_l1
+            print("move:", move)
+            if len(move) == 1:
+                continue
+            previous, current = move
+            res.append(previous + current)
+        return res
+
+    else:
+        print("No differences found")
 
 def draw_matches(matches,img):
     draw_img = img.copy()
@@ -97,7 +133,7 @@ def draw_matches(matches,img):
 def post_process_locs(points):
     kept_locs = []
     duplicates_idx =[]
-    print("Nb of points", len(points))
+    #print("Nb of points", len(points))
     for idx1 in range(len(points) -1):
         x1,y1 = points[idx1]
         for idx2 in range(idx1+1,len(points)):
@@ -189,18 +225,17 @@ def match_board(img):
 
     all_squares = [(x,y) for x in range(first_point[0], first_point[0]+(dw*8), dw) for y in range(first_point[1], first_point[1]+(dh*8), dh)]
 
-    labels = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
-        "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
-        "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
-        "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
-        "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
-        "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
-        "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
-        "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+    labels = ["a8", "a7", "a6", "a5", "a4", "a3", "a2", "a1",
+        "b8", "b7", "b6", "b5", "b4", "b3", "b2", "b1",
+        "c8", "c7", "c6", "c5", "c4", "c3", "c2", "c1",
+        "d8", "d7", "d6", "d5", "d4", "d3", "d2", "d1",
+        "e8", "e7", "e6", "e5", "e4", "e3", "e2", "e1",
+        "f8", "f7", "f6", "f5", "f4", "f3", "f2", "f1",
+        "g8", "g7", "g6", "g5", "g4", "g3", "g2", "g1",
+        "h8", "h7", "h6", "h5", "h4", "h3", "h2", "h1",
     ]
 
     dict_squares = {p: label for p, label in zip(all_squares, labels)}
-
     drawn_img = draw_squares(all_squares, img,dh,dw,dict_squares)
     """ plt.figure(figsize=(10,8))
     plt.subplot(121)
