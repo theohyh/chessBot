@@ -1,11 +1,9 @@
-from calendar import c
 import os
-from PIL.Image import Dither
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from mss import MSS as mss
-from numpy.ma.core import minimum
+
 
 
 MONITOR_2 = 1920
