@@ -1,9 +1,12 @@
 from calendar import c
 import os
+from PIL.Image import Dither
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from mss import MSS as mss
+from numpy.ma.core import minimum
+
 
 MONITOR_2 = 1920
 MONITOR_1 = 0
@@ -46,8 +49,36 @@ def main():
         cv2.waitKey(0) """
 
 
-        dict_squares, drawn_img = match_board(np_image)
-        detect_piece(drawn_img)
+        dict_squares, drawn_img, dh, dw = match_board(np_image)
+
+        display, matches = detect_piece(drawn_img)
+
+        nearest_squares = get_pieces_positions(matches, dict_squares)
+
+        print(nearest_squares)
+
+
+        plt.figure(figsize=(10,8))
+        plt.subplot(121)
+        plt.imshow(cv2.cvtColor(display,cv2.COLOR_BGR2RGB))
+        plt.title("Template Matching Result")
+        plt.show()
+
+
+def get_pieces_positions(matches, dict_squares):
+    nearest_squares = {}
+    for match in matches:
+        x,y,_,_ = match["bbox"]
+        min_dist = np.inf
+        nearest_sqr = ""
+        for point in dict_squares:
+            d = np.sqrt((point[0] - x)**2 + (point[1] - y)**2)
+            if d < min_dist:
+                min_dist = d
+                nearest_sqr = dict_squares[point]
+        nearest_squares[nearest_sqr] = match["template"]
+    return nearest_squares
+
 
 def draw_matches(matches,img):
     draw_img = img.copy()
@@ -110,7 +141,7 @@ def detect_piece(img):
                 point = max_loc
                 score = max_val """
 
-        y_arr,x_arr = np.where(res >= 0.90)
+        y_arr,x_arr = np.where(res >= 0.92)
         points = list(zip(x_arr,y_arr))
         points = post_process_locs(points)
 
@@ -123,11 +154,13 @@ def detect_piece(img):
 
     display = draw_matches(matches,board)
 
-    plt.figure(figsize=(10,8))
+    """ plt.figure(figsize=(10,8))
     plt.subplot(121)
     plt.imshow(cv2.cvtColor(display,cv2.COLOR_BGR2RGB))
     plt.title("Template Matching Result")
-    plt.show()
+    plt.show() """
+
+    return display,matches
 
 def draw_squares(all_squares, img, dw, dh,dict):
     draw_img = img.copy()
@@ -177,7 +210,7 @@ def match_board(img):
     plt.title("Template Matching Result")
     plt.show() """
 
-    return dict_squares, drawn_img
+    return dict_squares, drawn_img, dh,dw
 
 
 
