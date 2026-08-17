@@ -4,7 +4,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from mss import MSS as mss
 import chess
-from numpy.ma.core import sort
 
 
 MONITOR_2 = 1920
@@ -47,7 +46,8 @@ board = {
 }
 
 
-def main():
+def inputMoves() -> list:
+    global board
     with mss() as sct:
         region = {
             "top": 221,
@@ -69,13 +69,22 @@ def main():
 
         nearest_squares = get_pieces_positions(matches, dict_squares)
 
-        print(get_move(nearest_squares, board))
+        move = get_move(nearest_squares, board)
 
         plt.figure(figsize=(10,8))
         plt.subplot(121)
         plt.imshow(cv2.cvtColor(display,cv2.COLOR_BGR2RGB))
         plt.title("Template Matching Result")
         plt.show()
+
+        if move is not None:
+            board = nearest_squares
+            return move
+        else:
+            return []
+
+
+
 
 
 def get_pieces_positions(matches, dict_squares):
@@ -104,7 +113,7 @@ def get_move(nearest_squares, board):
             only_in_l1 = [x for x in l1 if x not in l2]
 
             move = only_in_l2 + only_in_l1
-            print("move:", move)
+
             if len(move) == 1:
                 continue
             previous, current = move
@@ -248,4 +257,4 @@ def match_board(img):
 
 
 if __name__ == "__main__":
-    main()
+    input()

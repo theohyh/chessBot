@@ -1,6 +1,9 @@
+from time import sleep
+
 import chess
 
 from MiniMax.engine import minimax
+from InputBot.input import inputMoves
 
 
 def main():
@@ -14,8 +17,6 @@ def main():
 
     while not board.is_game_over():
         print("=" * 40)
-        print(board)
-        print("=" * 40)
         if board.turn == human:
             """
             move_str = input("Votre Coup (ex: e2e4): ").strip()
@@ -28,7 +29,7 @@ def main():
             except ValueError:
                 print("Format incorrecte.")
             """
-            print("Bot 1 is playing ...")
+            """ print("Bot 1 is playing ...")
             is_max = board.turn == chess.WHITE
 
             score, best_move = minimax(board, 3, is_max)
@@ -40,7 +41,23 @@ def main():
 
             else:
                 print("Aucun coup")
+                break """
+
+            ok = input("Appuyez sur Entrée pour jouer votre coup : ")
+            if ok.lower() != "":
                 break
+            i = inputMoves()
+            if len(i) == 0:
+                break
+            else:
+                print(f"Vous jouez : {i[0]}")
+                move = chess.Move.from_uci(i[0])
+                if move in board.legal_moves:
+                    board.push(move)
+                else:
+                    print("Coup invalide.")
+                print(board)
+
         else:
             print("Bot 2 is playing ...")
             is_max = board.turn == chess.WHITE
@@ -51,10 +68,14 @@ def main():
                 print(f"Le bot joue : {best_move}")
                 print(f"score : {score}")
                 board.push(best_move)
+                print(board)
+                input("Appuyez sur Entrée pour jouer votre coup : ")
+                inputMoves()
 
             else:
                 print("Aucun coup")
                 break
+
     print("Fin de partie :", board.result())
 
 
