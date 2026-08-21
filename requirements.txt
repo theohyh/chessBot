@@ -3,3 +3,4 @@ mss
 numpy
 matplotlib
 opencv-python
+pyautogui
